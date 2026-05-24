@@ -5,7 +5,31 @@ Communication::Socket::Socket() : _sockfd(-1)
 
 }
 
-int Communication::Socket::bind(const std::string &ip, unsigned short port)
+int Communication::Socket::init(const std::string &ip, unsigned short port)
+{
+  try {
+    _bind(ip, port);
+  } catch (const SocketException &e) {
+    throw SocketException(SOCKET_INITIALIZATION_FAILED);
+    return -1;
+  }
+  return 0;
+}
+
+void Communication::Socket::run()
+{
+  if (_sockfd == -1) {
+    throw SocketException(SOCKET_NOT_BOUND);
+  }
+
+  if (listen(_sockfd, 5) == -1) {
+    throw SocketException(SOCKET_LISTEN_FAILED);
+  }
+
+  std::cout << "Socket is listening for incoming connections..." << std::endl;
+}
+
+int Communication::Socket::_bind(const std::string &ip, unsigned short port)
 {
   if (_sockfd != -1) {
     throw SocketException(SOCKET_ALREADY_BOUND);
@@ -31,7 +55,7 @@ int Communication::Socket::bind(const std::string &ip, unsigned short port)
   return 0;
 }
 
-int Communication::Socket::accept()
+int Communication::Socket::_accept()
 {
   if (_sockfd == -1) {
     throw SocketException(SOCKET_NOT_BOUND);
