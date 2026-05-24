@@ -14,6 +14,7 @@
 #include <vector>
 #include <cstddef>
 #include <sys/select.h>
+#include <algorithm>
 
 /** @brief Error message for binding an already-initialized socket. */
 #define SOCKET_ALREADY_BOUND "Socket is already connected"
@@ -31,6 +32,10 @@
 #define SOCKET_LISTEN_FAILED "Failed to listen on socket"
 /** @brief Error message when select fails. */
 #define SOCKET_SELECT_FAILED "Failed to monitor socket events"
+/** @brief Error message when receiving data from a client fails. */
+#define SOCKET_SEND_FAILED "Failed to send message to client"
+/** @brief Error message when closing a client connection fails. */
+#define SOCKET_INVALID_CLIENT "Client not found or not connected"
 
 namespace Communication {
   /**
@@ -81,8 +86,21 @@ namespace Communication {
       int init(const std::string& ip, unsigned short port);
 
 
-      // int send(int client_fd, const std::string& message);
+      /**
+        * @brief Send a message to a connected client.
+        * @param client_fd File descriptor of the client socket to send to.
+        * @param message Message payload to send.
+        * @return Number of bytes sent on success.
+        * @throws SocketException if sending fails or the client is not connected.
+        */
+      int send(int client_fd, const std::string& message);
 
+      /**
+        * @brief Close a client connection and remove it from the list of connected clients.
+        * @param client_fd File descriptor of the client socket to close.
+        * @throws SocketException if the client is not found or closing fails.
+        */
+      void close_client(int client_fd);
 
       /**
        * @brief Create and bind the socket to the given address.

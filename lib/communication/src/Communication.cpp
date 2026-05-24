@@ -124,6 +124,34 @@ std::vector<Communication::Socket::IncomingMessage> Communication::Socket::poll(
   return messages;
 }
 
+int Communication::Socket::send(int client_fd, const std::string& message)
+{
+  if (_sockfd == -1) {
+    throw SocketException(SOCKET_NOT_BOUND);
+  }
+  ssize_t sent = ::send(client_fd, message.c_str(), message.size(), 0);
+  if (sent == -1) {
+    throw SocketException(SOCKET_SEND_FAILED);
+    return -1;
+  }
+  return static_cast<int>(sent);
+}
+
+void Communication::Socket::close_client(int client_fd)
+{
+  if (_sockfd == -1) {
+    throw SocketException(SOCKET_NOT_BOUND);
+  }
+  auto it = std::find(_connected_clients.begin(), _connected_clients.end(), client_fd);
+  if (it != _connected_clients.end()) {
+    std::size_t index = static_cast<std::size_t>(std::distance(_connected_clients.begin(), it));
+    _disconnectClient(index);
+  } else {
+    throw SocketException(SOCKET_INVALID_CLIENT);
+  }
+}
+
+
 void Communication::Socket::broadcast(const std::string& message)
 {
   if (_sockfd == -1) {
