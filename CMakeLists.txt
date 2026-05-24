@@ -1,9 +1,11 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 4.3)
 
 project(dumas)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include(CTest)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
@@ -12,5 +14,4 @@ add_subdirectory(lib/communication)
 
 add_executable(dumas_server ${SOURCES})
 target_link_libraries(dumas_server communication)
-
 
