@@ -5,7 +5,7 @@ int main() {
   Communication::Socket server;
 
   try {
-    server.init("127.0.0.1", 8080);
+    server.init("127.0.0.1", 4242);
   } catch (const Communication::Socket::SocketException &e) {
     std::cerr << "Failed to initialize server: " << e.what() << std::endl;
     return 1;
@@ -23,6 +23,20 @@ int main() {
 
     for (const auto &message : messages) {
       std::cout << "Client " << message.client_fd << ": " << message.payload << std::endl;
+      if (message.payload == "exit") {
+        std::cout << "Client " << message.client_fd << " requested to exit." << std::endl;
+        server.close_client(message.client_fd);
+      } else {
+        // Echo the message back to the client
+       
+        try {
+          server.send(message.client_fd, "Echo: " + message.payload);
+          // send to all clients
+          server.broadcast("Broadcast: " + message.payload);
+        } catch (const Communication::Socket::SocketException &e) {
+          std::cerr << "Failed to send message to client " << message.client_fd << ": " << e.what() << std::endl;
+        }
+      }
     }
   }
   return 0;
