@@ -11,6 +11,9 @@
 #include <string>
 #include <exception>
 #include <iostream>
+#include <vector>
+#include <cstddef>
+#include <sys/select.h>
 
 /** @brief Error message for binding an already-initialized socket. */
 #define SOCKET_ALREADY_BOUND "Socket is already connected"
@@ -26,6 +29,8 @@
 #define SOCKET_INITIALIZATION_FAILED "Failed to initialize socket"
 /** @brief Error message when listening on the socket fails. */
 #define SOCKET_LISTEN_FAILED "Failed to listen on socket"
+/** @brief Error message when select fails. */
+#define SOCKET_SELECT_FAILED "Failed to monitor socket events"
 
 namespace Communication {
   /**
@@ -62,17 +67,22 @@ namespace Communication {
        */
       Socket();
       /**
-       * @brief Destroy the socket and close the descriptor if open.
-       */
-      ~Socket() {
-        if (_sockfd != -1) {
-          close(_sockfd);
-        }
-      }
+      * @brief Destroy the socket and close the descriptor if open.
+      */
+      ~Socket();
 
+      /**
+       * @brief Initialize the socket by creating and binding it to the given address.
+       * @param ip IPv4 address to bind to.
+       * @param port Port to bind to.
+       * @return 0 on success.
+       * @throws SocketException on failure to create or bind the socket.
+       */
       int init(const std::string& ip, unsigned short port);
 
-      void run();
+
+      // int send(int client_fd, const std::string& message);
+
 
       /**
        * @brief Create and bind the socket to the given address.
@@ -89,7 +99,36 @@ namespace Communication {
        */
       int _accept();
 
+      /**
+       * @brief Incoming data received from a connected client.
+       */
+      struct IncomingMessage {
+        int client_fd;
+        std::string payload;
+      };
+
+      /**
+       * @brief Poll for socket activity without blocking indefinitely.
+       * @param timeout_ms Timeout in milliseconds. Use 0 for non-blocking.
+       * @return Incoming messages read during this poll cycle.
+       * @throws SocketException on select failure or invalid state.
+       */
+      std::vector<IncomingMessage> poll(int timeout_ms = 0);
+
+      /**
+       * @brief Broadcast a message to all connected clients.
+       * @param message Message payload to send.
+       * @throws SocketException if the server socket is not initialized.
+       */
+      void broadcast(const std::string& message);
+
     private:
       int _sockfd;
+      std::vector<int> _connected_clients;
+      fd_set _master_fds;
+      int _max_fd;
+
+      void _registerClient(int client_fd);
+      void _disconnectClient(std::size_t index);
   };
 }
